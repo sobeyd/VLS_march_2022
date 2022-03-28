@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: "Cloud Formation script to create VLS required resources"
+Description: "Cloud Formation script to create EMR Cluster with SSM role"
 Parameters:
 ########### EMR in Separate Network ################
   VPCCidr:
@@ -46,10 +46,10 @@ Parameters:
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
   Notebook1URL:
     Type: String
-    Default: https://awsbigdatavls.co.za/downloads/VLS_DEMO.ipynb
+    Default: https://awsbigdatavls.co.za/downloads/VLSEMRNotebook.ipynb
   Notebook2URL:
     Type: String
-    Default: https://raw.githubusercontent.com/pmcdowell-okta/cloudformation-deploy-html/master/html/index.html
+    Default: https://awsbigdatavls.co.za/downloads/VLSSagemakerNotebook.ipynb
 ########### Copy Notebooks to bucket using EC2 ################
 
 ########### DataBrew Immersion Day Template ################
@@ -478,8 +478,8 @@ Resources:
             #!/bin/bash -xe
             mkdir vlsnotebooks
             cd vlsnotebooks
-            wget -O index2.html ${Notebook2URL}
-            wget -O VLS_DEMO_EMR.ipynb ${Notebook1URL}
+            wget -O VLSSagemakerNotebook.ipynb ${Notebook2URL}
+            wget -O VLSEMRNotebook.ipynb ${Notebook1URL}
             aws s3 sync . s3://${NBBucketName}-${AWS::AccountId}-${AWS::Region}/vlsnotebooks/          
               
   InstanceSecurityGroup:
