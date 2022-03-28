@@ -1,0 +1,1473 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "Cloud Formation script to create VLS required resources"
+Parameters:
+########### EMR in Separate Network ################
+  VPCCidr:
+    Type: String
+    Default: 10.10.0.0/16
+  Subnet1Cidr:
+    Type: String
+    Default: 10.10.10.0/24
+  Subnet2Cidr:
+    Type: String
+    Default: 10.10.20.0/24
+  EMRInstanceType:
+    Type: String
+    Default: m5.xlarge
+  EC2InstanceType:
+    Type: String
+    Default: t2.micro
+  ReleaseLabel:
+    Type: String
+    Default: emr-6.4.0
+  TerminationProtected:
+    Type: String
+    Default: false
+  EMRPrincipal:
+    Type: String
+    Default: elasticmapreduce.amazonaws.com
+  Ec2Principal:
+    Type: String
+    Default: ec2.amazonaws.com
+  VLSDate:
+    Type: String
+    Default: 28MAR22
+########### EMR in Separate Network ################
+
+########### Copy Notebooks to bucket using EC2 ################
+  NBBucketName:
+    Type: String
+    Default: aws-resources
+  EC2Name:
+    Type: String
+    Default: "Local Producer"
+  LatestAMIId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  Notebook1URL:
+    Type: String
+    Default: https://awsbigdatavls.co.za/downloads/VLS_DEMO.ipynb
+  Notebook2URL:
+    Type: String
+    Default: https://raw.githubusercontent.com/pmcdowell-okta/cloudformation-deploy-html/master/html/index.html
+########### Copy Notebooks to bucket using EC2 ################
+
+########### DataBrew Immersion Day Template ################
+  AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392S3BucketBF7A7F3F:
+    Type: String
+    Description: >-
+      S3 bucket for asset
+      "4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392"
+    Default: aws-data-analytics-workshops
+  AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392S3VersionKeyFAF93626:
+    Type: String
+    Description: >-
+      S3 key for asset version
+      "4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392"
+    Default: glue-databrew-immersionday/assets/||4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392.zip
+  AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392ArtifactHashE56CD69A:
+    Type: String
+    Description: >-
+      Artifact hash for asset
+      "4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392"
+    Default: 4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392
+  AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cS3BucketC9AB40FB:
+    Type: String
+    Description: >-
+      S3 bucket for asset
+      "6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c"
+    Default: aws-data-analytics-workshops
+  AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cS3VersionKey430F94AA:
+    Type: String
+    Description: >-
+      S3 key for asset version
+      "6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c"
+    Default: glue-databrew-immersionday/assets/||6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c.zip
+  AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cArtifactHash82FCD11B:
+    Type: String
+    Description: >-
+      Artifact hash for asset
+      "6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c"
+    Default: 6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c
+  AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cS3BucketEAC9DD43:
+    Type: String
+    Description: >-
+      S3 bucket for asset
+      "c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c"
+    Default: aws-data-analytics-workshops
+  AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cS3VersionKeyDD9AE9E7:
+    Type: String
+    Description: >-
+      S3 key for asset version
+      "c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c"
+    Default: glue-databrew-immersionday/assets/||c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c.zip
+  AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cArtifactHash627DAAA7:
+    Type: String
+    Description: >-
+      Artifact hash for asset
+      "c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c"
+    Default: c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c
+########### DataBrew Immersion Day Template ################
+
+############ SageMaker Notebooks #################
+  ProjectName:
+    Type: String
+    AllowedPattern: "^[a-z]*$"
+    Default: smstudiovpc
+  SMVpcCIDR:
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+    Default: 10.2.0.0/16
+  PrivateSubnetCIDR:
+    Type: String
+    AllowedPattern: '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+    Default: 10.2.1.0/24
+
+  KMSAlias:
+    Type: String
+    Default: sagemaker-kms-example
+  
+  SMNBInstanceType:
+    Description: The type of ML compute instance to launch for the notebook
+    Type: String
+    Default: ml.t2.medium
+
+  SMNotebookName:
+    Type: String
+    Default: vls-event-notebook
+############ SageMaker Notebooks #################
+
+Resources:
+########### EMR in Separate Network ################
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: VLS
+          Value: !Ref VLSDate
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: VLS
+          Value: !Ref VLSDate
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  Subnet1Public:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref Subnet1Cidr
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join [ ' ', [ !Ref AWS::StackName, Public ] ]
+        - Key: VLS
+          Value: !Ref VLSDate
+  RouteTableAPublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join [ ' ', [ !Ref AWS::StackName, Public ] ]
+        - Key: VLS
+          Value: !Ref VLSDate
+  RouteTableAssociation1Public:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet1Public
+      RouteTableId: !Ref RouteTableAPublic
+  RouteTableAssociation2Public:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet2Public
+      RouteTableId: !Ref RouteTableAPublic
+  RouteTablePublicAInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTableAPublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  EMRRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: VLS_EMR_ROLE
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: !Ref EMRPrincipal
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceRole
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: VLS
+          Value: !Ref VLSDate
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: VLS_EMR_EC2_ROLE
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: !Ref Ec2Principal
+            Action: sts:AssumeRole
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: VLS
+          Value: !Ref VLSDate
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      InstanceProfileName: !Ref EC2Role
+      Roles:
+        - !Ref EC2Role
+  EMRCluster:
+    Type: AWS::EMR::Cluster
+    Properties:
+      LogUri: !Sub s3n://aws-logs-${AWS::AccountId}-${AWS::Region}/elasticmapreduce/
+      ReleaseLabel: !Ref ReleaseLabel
+      VisibleToAllUsers: true
+      Applications:
+        - Name: Hadoop
+        - Name: Hive
+        - Name: Pig
+        - Name: Hue
+        - Name: Ganglia
+        - Name: Tez
+        - Name: Spark
+        - Name: JupyterHub
+        - Name: JupyterEnterpriseGateway
+        - Name: Livy
+        - Name: ZooKeeper        
+      ScaleDownBehavior: TERMINATE_AT_TASK_COMPLETION
+      EbsRootVolumeSize: 10
+      StepConcurrencyLevel: 1
+      Instances:
+        MasterInstanceGroup:
+          InstanceCount: 1
+          InstanceType: !Ref EMRInstanceType
+          Market: ON_DEMAND
+          Name: EMRMaster
+        CoreInstanceGroup:
+          InstanceCount: 2
+          InstanceType: !Ref EMRInstanceType
+          Market: ON_DEMAND
+          Name: EMRCore
+        TerminationProtected: !Ref TerminationProtected
+        Ec2SubnetId: !Ref Subnet1Public
+        EmrManagedMasterSecurityGroup: !Ref MasterSecurityGroup
+        EmrManagedSlaveSecurityGroup: !Ref CoreandTaskSecurityGroup
+      Name: !Sub EMR-VLS-${VLSDate}
+      JobFlowRole: !Ref EC2InstanceProfile
+      ServiceRole: !Ref EMRRole
+      VisibleToAllUsers: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: VLS
+          Value: !Ref VLSDate
+########### EMR in Separate Network ################
+
+########### EMR Security Groups ################
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: EMR-MASTER-SG
+      GroupDescription: Security group emr
+      VpcId: !Ref VPC
+  MasterSecurityGroupIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      IpProtocol: tcp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  MasterSecurityGroupIngress2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      IpProtocol: tcp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  MasterSecurityGroupIngress3:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      IpProtocol: udp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  MasterSecurityGroupIngress4:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: 0
+      IpProtocol: udp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  MasterSecurityGroupIngress5:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: -1
+      IpProtocol: icmp
+      ToPort: -1
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  MasterSecurityGroupIngress6:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref MasterSecurityGroup
+      FromPort: -1
+      IpProtocol: icmp
+      ToPort: -1
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  CoreandTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: EMR-CORE-SG
+      GroupDescription: Security group emr
+      VpcId: !Ref VPC
+  CoreandTaskSecurityGroupIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: 0
+      IpProtocol: tcp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  CoreandTaskSecurityGroupIngress2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: 0
+      IpProtocol: tcp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  CoreandTaskSecurityGroupIngress3:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: 0
+      IpProtocol: udp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  CoreandTaskSecurityGroupIngress4:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: 0
+      IpProtocol: udp
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+  CoreandTaskSecurityGroupIngress5:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: -1
+      IpProtocol: icmp
+      ToPort: -1
+      SourceSecurityGroupId: !Ref CoreandTaskSecurityGroup
+  CoreandTaskSecurityGroupIngress6:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref CoreandTaskSecurityGroup
+      FromPort: -1
+      IpProtocol: icmp
+      ToPort: -1
+      SourceSecurityGroupId: !Ref MasterSecurityGroup
+########### EMR Security Groups ################
+
+########### Copy Notebooks to bucket using EC2 ################
+  SSMIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+  S3BucketForNotebooks:
+    Type: 'AWS::S3::Bucket'
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${NBBucketName}-${AWS::AccountId}-${AWS::Region}"
+#  EC2InstanceProfile2:
+#    Type: AWS::IAM::InstanceProfile
+#    Properties:
+#      Path: /
+#      Roles:
+#      - !Ref SSMIAMRole
+  Subnet2Public:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref Subnet2Cidr
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join [ ' ', [ !Ref AWS::StackName, Public ] ]
+        - Key: VLS
+          Value: !Ref VLSDate
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          InstallAndRun:
+          - Install
+          Install:
+            commands:
+              yum: "sudo yum install python3"
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      #SecurityGroups:
+      #- !Ref InstanceSecurityGroup
+      ImageId: !Ref LatestAMIId
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          SubnetId: !Ref Subnet2Public
+      Tags:
+        - Key: Name
+          Value: !Ref EC2Name
+        - Key: VLS
+          Value: !Ref VLSDate
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -xe
+            mkdir vlsnotebooks
+            cd vlsnotebooks
+            wget -O index2.html ${Notebook2URL}
+            wget -O VLS_DEMO_EMR.ipynb ${Notebook1URL}
+            aws s3 sync . s3://${NBBucketName}-${AWS::AccountId}-${AWS::Region}/vlsnotebooks/          
+              
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+  NewVolume:
+    Type: AWS::EC2::Volume
+    Properties:
+      Size: 100
+      AvailabilityZone: !GetAtt Ec2Instance.AvailabilityZone
+  MountPoint:
+    Type: AWS::EC2::VolumeAttachment
+    Properties:
+      InstanceId: !Ref Ec2Instance
+      VolumeId: !Ref NewVolume
+      Device: /dev/sdh
+########### Copy Notebooks to bucket using EC2 ################
+
+########### EMR Notebooks Security Groups ################
+  EMRNotebooksSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for DataSync
+      GroupName: emr-notebooks
+      VpcId: !Ref VPC
+  EMRLivySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for DataSync
+      GroupName: ElasticMapReduceEditors-Livy
+      VpcId: !Ref VPC
+  EMREditorsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for DataSync
+      GroupName: ElasticMapReduceEditors-Editor
+      VpcId: !Ref VPC
+
+  EMRNotebooksSecurityGroupEgress1:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMRNotebooksSecurityGroup
+      SourceSecurityGroupId: !Ref EMRLivySecurityGroup
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+  EMRNotebooksSecurityGroupEgress2:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMRNotebooksSecurityGroup
+      SourceSecurityGroupId: !Ref EMRLivySecurityGroup
+      IpProtocol: tcp
+      FromPort: 8998
+      ToPort: 8998
+  EMRNotebooksSecurityGroupEgress3:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMRNotebooksSecurityGroup
+      CidrIp: 0.0.0.0/0
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+
+  EMRLivySecurityGroupIngress1:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: EMRLivySecurityGroup
+      SourceSecurityGroupId: !Ref EMRNotebooksSecurityGroup
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+  EMRLivySecurityGroupIngress2:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId:
+        Ref: EMRLivySecurityGroup
+      SourceSecurityGroupId: !Ref EMREditorsSecurityGroup
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+  EMRLivySecurityGroupEgress1:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMRLivySecurityGroup
+      CidrIp: 0.0.0.0/0
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+  EMRLivySecurityGroupEgress2:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMRLivySecurityGroup
+      SourceSecurityGroupId: !Ref EMRNotebooksSecurityGroup
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+  EMREditorsSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId:
+        Ref: EMREditorsSecurityGroup
+      SourceSecurityGroupId: !Ref EMRLivySecurityGroup
+      IpProtocol: tcp
+      FromPort: 18888
+      ToPort: 18888
+########### EMR Notebooks Security Groups ################
+
+########### DataBrew Immersion Day Template ################
+  S3Bucket3FEEDC04:
+    Type: 'AWS::S3::Bucket'
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/S3-Bucket-/Resource
+  S3BucketPolicyB969876F:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref S3Bucket3FEEDC04
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject*'
+              - 's3:GetBucket*'
+              - 's3:List*'
+              - 's3:DeleteObject*'
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt 
+                - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+                - Arn
+            Resource:
+              - !GetAtt 
+                - S3Bucket3FEEDC04
+                - Arn
+              - !Join 
+                - ''
+                - - !GetAtt 
+                    - S3Bucket3FEEDC04
+                    - Arn
+                  - /*
+        Version: 2012-10-17
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/S3-Bucket-/Policy/Resource
+  S3BucketAutoDeleteObjectsCustomResource93549666:
+    Type: 'Custom::S3AutoDeleteObjects'
+    Properties:
+      ServiceToken: !GetAtt 
+        - CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F
+        - Arn
+      BucketName: !Ref S3Bucket3FEEDC04
+    DependsOn:
+      - S3BucketPolicyB969876F
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/S3-Bucket-/AutoDeleteObjectsCustomResource/Default
+  CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+      ManagedPolicyArns:
+        - !Sub >-
+          arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      'aws:cdk:path': >-
+        databrew-immersionday/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role
+  CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        S3Bucket: !Ref >-
+          AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392S3BucketBF7A7F3F
+        S3Key: !Join 
+          - ''
+          - - !Select 
+              - 0
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392S3VersionKeyFAF93626
+            - !Select 
+              - 1
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParameters4cd61014b71160e8c66fe167e43710d5ba068b80b134e9bd84508cf9238b2392S3VersionKeyFAF93626
+      Timeout: 900
+      MemorySize: 128
+      Handler: __entrypoint__.handler
+      Role: !GetAtt 
+        - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+        - Arn
+      Runtime: nodejs12.x
+      Description: !Join 
+        - ''
+        - - 'Lambda function for auto-deleting objects in '
+          - !Ref S3Bucket3FEEDC04
+          - ' S3 bucket.'
+    DependsOn:
+      - CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+    Metadata:
+      'aws:cdk:path': >-
+        databrew-immersionday/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler
+  s3providerlambdaRole7524071B:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole'
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/s3-provider/lambdaRole/Resource
+  s3providerlambdaRoleDefaultPolicy5C093915:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject*'
+              - 's3:GetBucket*'
+              - 's3:List*'
+              - 's3:DeleteObject*'
+              - 's3:PutObject*'
+              - 's3:Abort*'
+            Effect: Allow
+            Resource:
+              - !GetAtt 
+                - S3Bucket3FEEDC04
+                - Arn
+              - !Join 
+                - ''
+                - - !GetAtt 
+                    - S3Bucket3FEEDC04
+                    - Arn
+                  - /*
+        Version: 2012-10-17
+      PolicyName: s3providerlambdaRoleDefaultPolicy5C093915
+      Roles:
+        - !Ref s3providerlambdaRole7524071B
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/s3-provider/lambdaRole/DefaultPolicy/Resource
+  s3providers3objectfunction9C12F646:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        S3Bucket: !Ref >-
+          AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cS3BucketC9AB40FB
+        S3Key: !Join 
+          - ''
+          - - !Select 
+              - 0
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cS3VersionKey430F94AA
+            - !Select 
+              - 1
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParameters6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69cS3VersionKey430F94AA
+      Role: !GetAtt 
+        - s3providerlambdaRole7524071B
+        - Arn
+      Environment:
+        Variables:
+          BucketName: !Ref S3Bucket3FEEDC04
+          BucketArn: !GetAtt 
+            - S3Bucket3FEEDC04
+            - Arn
+          AccountID: 024530799833
+      Handler: s3_obj_provider_handler.on_event
+      Runtime: python3.7
+      Timeout: 300
+    DependsOn:
+      - s3providerlambdaRoleDefaultPolicy5C093915
+      - s3providerlambdaRole7524071B
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/s3-provider/s3-object-function/Resource
+      'aws:asset:path': asset.6b73b1e2c78b9285f77d1dba7ff7a185e575991f803dc11e0eb435d5b1c8d69c
+      'aws:asset:property': Code
+  s3providerMyProviderframeworkonEventServiceRole56F4288A:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+    Metadata:
+      'aws:cdk:path': >-
+        databrew-immersionday/s3-provider/MyProvider/framework-onEvent/ServiceRole/Resource
+  s3providerMyProviderframeworkonEventServiceRoleDefaultPolicy0EA89651:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: 'lambda:InvokeFunction'
+            Effect: Allow
+            Resource: !GetAtt 
+              - s3providers3objectfunction9C12F646
+              - Arn
+        Version: 2012-10-17
+      PolicyName: s3providerMyProviderframeworkonEventServiceRoleDefaultPolicy0EA89651
+      Roles:
+        - !Ref s3providerMyProviderframeworkonEventServiceRole56F4288A
+    Metadata:
+      'aws:cdk:path': >-
+        databrew-immersionday/s3-provider/MyProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource
+  s3providerMyProviderframeworkonEvent09E95FD4:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Code:
+        S3Bucket: !Ref >-
+          AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cS3BucketEAC9DD43
+        S3Key: !Join 
+          - ''
+          - - !Select 
+              - 0
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cS3VersionKeyDD9AE9E7
+            - !Select 
+              - 1
+              - !Split 
+                - '||'
+                - !Ref >-
+                  AssetParametersc691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49cS3VersionKeyDD9AE9E7
+      Role: !GetAtt 
+        - s3providerMyProviderframeworkonEventServiceRole56F4288A
+        - Arn
+      Description: >-
+        AWS CDK resource provider framework - onEvent
+        (databrew-immersionday/s3-provider/MyProvider)
+      Environment:
+        Variables:
+          USER_ON_EVENT_FUNCTION_ARN: !GetAtt 
+            - s3providers3objectfunction9C12F646
+            - Arn
+      Handler: framework.onEvent
+      Runtime: nodejs14.x
+      Timeout: 900
+    DependsOn:
+      - s3providerMyProviderframeworkonEventServiceRoleDefaultPolicy0EA89651
+      - s3providerMyProviderframeworkonEventServiceRole56F4288A
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/s3-provider/MyProvider/framework-onEvent/Resource
+      'aws:asset:path': asset.c691172cdeefa2c91b5a2907f9d81118e47597634943344795f1a844192dd49c
+      'aws:asset:property': Code
+  s3providerresource14D7540E2:
+    Type: 'AWS::CloudFormation::CustomResource'
+    Properties:
+      ServiceToken: !GetAtt 
+        - s3providerMyProviderframeworkonEvent09E95FD4
+        - Arn
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/s3-provider/resource1/Default
+  CDKMetadata:
+    Type: 'AWS::CDK::Metadata'
+    Properties:
+      Analytics: >-
+        v2:deflate64:H4sIAAAAAAAAClVP0U7DMAz8lr27nqYKTbwBlXilKl8Q3DBCmxjFDmiK8u8s66rC0519J/vugPd3eNg9mB9paJz2mThazK9qaIKOg2hMpNAlUfaDFU6RLHTvYeP/pD7ytxtthEcRq5czJxdO1d+baLzVi/L3ykvSr6QF6vssLeanRJPVKt3YAj3Pjs7bepkLOOMxDzwvkSpuztUzG/82GszPKZA6DlVbeQFpG1OjCl4TF6BrnybeUgqulQr0Z/3gsG/xiMfdpzjXxBTUeYvDgr/ZAvveTgEAAA==
+    Metadata:
+      'aws:cdk:path': databrew-immersionday/CDKMetadata/Default
+########### DataBrew Immersion Day Template ################
+
+############ SageMaker Notebooks #################
+#### https://github.com/aws-samples/amazon-sagemaker-studio-vpc-blog/blob/main/templates/vpc_template.yaml ####
+  SMNBVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SMVpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-vpc
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref PrivateSubnetCIDR
+      VpcId: !Ref SMNBVPC
+      AvailabilityZone: !Sub  "${AWS::Region}a"
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-private-subnet
+
+  SMSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: security group for SageMaker notebook instance, training jobs and hosting endpoint
+      VpcId: !Ref SMNBVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-security-group
+
+  SMSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: '-1'
+      GroupId: !Ref SMSecurityGroup
+      SourceSecurityGroupId: !Ref SMSecurityGroup
+
+  SMPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SMNBVPC
+
+  SMPrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SMPrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+  SMVPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow TLS for VPC Endpoint
+      VpcId: !Ref SMNBVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-endpoint-security-group
+
+  SMEndpointSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      GroupId: !Ref SMVPCEndpointSecurityGroup
+      SourceSecurityGroupId: !Ref SMSecurityGroup
+
+  SMVPCEndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !Ref SMNBVPC
+      PolicyDocument:
+        !Sub |
+        {
+          "Version":"2012-10-17",
+          "Statement":[{
+            "Effect":"Allow",
+            "Principal": "*",
+            "Action":[
+              "s3:GetObject",
+              "s3:PutObject",
+              "s3:ListBucket"
+            ],
+            "Resource": ["arn:aws:s3:::${ProjectName}-data-${AWS::AccountId}",
+            "arn:aws:s3:::${ProjectName}-models-${AWS::AccountId}",
+            "arn:aws:s3:::${ProjectName}-data-${AWS::AccountId}/*",
+            "arn:aws:s3:::${ProjectName}-models-${AWS::AccountId}/*"
+            ]
+          }]
+        }
+      RouteTableIds:
+        - !Ref SMPrivateRouteTable
+
+  SMVPCEndpointS3Id:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-s3-endpoint-${ProjectName}-id"
+      Type: String
+      Value: !Ref SMVPCEndpointS3
+      Description: S3 VPC Endpoint ID
+
+  VPCEndpointSagemakerAPI:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sagemaker.api'
+      VpcId: !Ref SMNBVPC
+
+  VPCEndpointSageMakerRuntime:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sagemaker.runtime'
+      VpcId: !Ref SMNBVPC
+
+  VPCEndpointSageMakerNotebook:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'aws.sagemaker.${AWS::Region}.notebook'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointSTS:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sts'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointSSM:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssm'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointCW:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.monitoring'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointCWL:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.logs'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointECR:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.dkr'
+      VpcId: !Ref SMNBVPC
+
+  SMVPCEndpointECRAPI:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SubnetIds:
+        - !Ref PrivateSubnet
+      SecurityGroupIds:
+        - !Ref SMVPCEndpointSecurityGroup
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecr.api'
+      VpcId: !Ref SMNBVPC
+#### https://github.com/aws-samples/amazon-sagemaker-studio-vpc-blog/blob/main/templates/vpc_template.yaml ####
+
+#### https://github.com/aws-samples/amazon-sagemaker-studio-vpc-blog/blob/main/templates/iam_template.yaml ####
+  SageMakerNotebookInstancePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: SageMaker Notebook restricted access
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CloudWatchLogsAccess
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DescribeLogStreams
+              - logs:PutLogEvents
+              - logs:GetLogEvents
+            Resource:
+              - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sagemaker/*
+              - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-stream:*
+          - Sid: CloudWatchMetricsAccess
+            Effect: Allow
+            Action:
+              - cloudwatch:GetMetricStatistics
+              - cloudwatch:ListMetrics
+              - cloudwatch:PutMetricData
+              - cloudwatch:GetMetricData
+              - cloudwatch:PutMetricAlarm
+              - cloudwatch:DescribeAlarms
+            Resource: '*'
+          - Sid: KMSAccess
+            Effect: Allow
+            Action:
+              - 'kms:CreateGrant'
+              - 'kms:Decrypt'
+              - 'kms:DescribeKey'
+              - 'kms:Encrypt'
+              - 'kms:GenerateDataKey'
+              - 'kms:ListAliases'
+            Resource: '*'
+          - Sid: S3Access
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ProjectName}-data-${AWS::AccountId}/*
+          - Sid: ECRAccess
+            Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:SetRepositoryPolicy
+              - ecr:CompleteLayerUpload
+              - ecr:BatchDeleteImage
+              - ecr:UploadLayerPart
+              - ecr:InitiateLayerUpload
+              - ecr:PutImage
+            Resource: 'arn:aws:ecr:*:*:repository/*sagemaker*'
+          - Sid: PassRole
+            Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: '*'
+            Condition:
+              StringEquals:
+                iam:PassedToService: sagemaker.amazonaws.com
+          - Sid: SageMakerAccess
+            Action:
+              - sagemaker:CreateTrainingJob
+              - sagemaker:CreateProcessingJob
+              - sagemaker:CreateModel
+              - sagemaker:CreateHyperParameterTuningJob
+            Resource: '*'
+            Effect: Deny
+            Condition:
+              'Null':
+                'sagemaker:VpcSubnets': 'true'
+          - Sid: SageMakerList
+            Action:
+              - sagemaker:Describe*
+              - sagemaker:List*
+            Resource: '*'
+            Effect: Allow
+          - Sid: SageMakerStudioSignedURLCreation
+            Action:
+              - sagemaker:CreateApp
+            Resource: '*'
+            Effect: Allow
+          - Sid: EC2Access
+            Effect: Allow
+            Action:
+              - ec2:CreateNetworkInterface
+              - ec2:CreateNetworkInterfacePermission
+              - ec2:DeleteNetworkInterface
+              - ec2:DeleteNetworkInterfacePermission
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribeVpcs
+              - ec2:DescribeDhcpOptions
+              - ec2:DescribeSubnets
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeVpcEndpoints
+            Resource: '*'
+
+  SageMakerNotebookInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      RoleName: !Sub ${ProjectName}-notebook-role
+      ManagedPolicyArns:
+        - !Ref SageMakerNotebookInstancePolicy
+
+  KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "Generated KMS Key for sagemaker Notebook's EBS encryption"
+      EnableKeyRotation: true
+      Enabled: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: allow-root-access-to-key
+        Statement:
+          - Sid: allow-root-to-delegate-actions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action:
+              - kms:DeleteAlias
+              - kms:DescribeKey
+              - kms:EnableKey
+              - kms:GetKeyPolicy
+              - kms:UpdateAlias
+              - kms:CreateAlias
+              - kms:GetKeyPolicy
+              - kms:CreateGrant
+              - kms:DisableKey
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:CancelKeyDeletion
+              - kms:ScheduleKeyDeletion
+              - kms:PutKeyPolicy
+              - kms:RevokeGrant
+              - kms:TagResource
+              - kms:UnTagResource
+              - kms:EnableKeyRotation
+              - kms:ListResourceTags
+            Resource: '*'
+  KeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/${KMSAlias}
+      TargetKeyId: !Ref KMSKey  
+#### https://github.com/aws-samples/amazon-sagemaker-studio-vpc-blog/blob/main/templates/iam_template.yaml ####
+
+#### https://raw.githubusercontent.com/aws-samples/amazon-sagemaker-studio-vpc-blog/main/templates/s3_template.yaml ####
+  KMSCMK:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: KMS key for S3 buckets
+      KeyPolicy:
+        Id: key-policy-1
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow access for Key Users
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt'
+              - 'kms:GenerateDataKey'
+              - 'kms:DescribeKey'
+            Resource: '*'
+#            Condition:
+#              StringNotEquals:
+#                'aws:sourceVpce': 
+#                  Fn::ImportValue: 
+#                    !Sub "ds-s3-endpoint-${ProjectName}-id"
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  KMSCMKAlias:
+    Type: 'AWS::KMS::Alias'
+    Properties:
+      AliasName: !Sub "alias/ds-kms-cmk-${ProjectName}"
+      TargetKeyId: !Ref KMSCMK
+
+  KMSCMKArn:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Name: !Sub "ds-kms-cmk-${ProjectName}-arn"
+      Type: String
+      Value: !GetAtt 
+        - KMSCMK
+        - Arn
+      Description: SageMakerExecRole ARN
+
+  SMDataBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub ${ProjectName}-data-${AWS::AccountId}
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !Ref KMSCMK
+
+#  DataBucketPolicy:
+#    Type: 'AWS::S3::BucketPolicy'
+#    DependsOn: DataBucket
+#    Properties:
+#      Bucket: !Sub ${ProjectName}-data-${AWS::AccountId}
+#      PolicyDocument:
+#        Statement:
+#          - Action:
+#              - 's3:GetObject'
+#              - 's3:PutObject'
+#              - 's3:ListBucket'
+##            Effect: Deny
+#            Effect: Allow
+#            Resource:
+#              - !Sub "arn:aws:s3:::${ProjectName}-data-${AWS::AccountId}/*"
+#              - !Sub "arn:aws:s3:::${ProjectName}-data-${AWS::AccountId}"
+#            Principal: '*'
+##            Condition:
+##              StringNotEquals:
+##                'aws:sourceVpce': 
+##                  Fn::ImportValue: 
+##                    !Sub "ds-s3-endpoint-${ProjectName}-id"
+#### https://raw.githubusercontent.com/aws-samples/amazon-sagemaker-studio-vpc-blog/main/templates/s3_template.yaml ####
+
+  NotebookInstance:
+    Type: "AWS::SageMaker::NotebookInstance"
+    Properties:
+      DirectInternetAccess: Enabled
+      SubnetId: !Ref PrivateSubnet
+      NotebookInstanceName: !Ref SMNotebookName
+      InstanceType: !Ref SMNBInstanceType
+      SecurityGroupIds: 
+        - !GetAtt SMSecurityGroup.GroupId
+      RoleArn: !GetAtt SageMakerNotebookInstanceRole.Arn
+#
+#  SMDomain:
+#    Type: AWS::SageMaker::Domain
+#    Properties: 
+#      AuthMode: IAM
+#      DefaultUserSettings: UserSettings
+#      DomainName: vlssmdomain
+#      KmsKeyId: !Ref KMSKey
+#      SubnetIds: !Ref PrivateSubnet
+#      VpcId: !Ref SMNBVPC
+############ SageMaker Notebooks #################
+
+Outputs:
+########### EMR in Separate Network ################
+  ClusterId:
+    Description: "The ID of the EMR Cluster"
+    Value:
+      Ref: EMRCluster
+  MasterPublicDNS:
+    Description: "MasterPublicDNS/IP-address of EMR cluster MasterNode"
+    Value: !GetAtt
+      - EMRCluster
+      - MasterPublicDNS
+########### EMR in Separate Network ################
+
+########### Copy Notebooks to bucket using EC2 ################
+  EC2PublicDNS:
+    Description: "PublicDNS/IP-address of EC2 Instance"
+    Value: !GetAtt
+      - Ec2Instance
+      - PublicDnsName
+  NotebookBucketName:
+    Value: !Sub "${NBBucketName}-${AWS::AccountId}-${AWS::Region}"
+########### Copy Notebooks to bucket using EC2 ################
+
+########### DataBrew Immersion Day Template ################
+  DataBrewBucketName:
+    Value: !Ref S3Bucket3FEEDC04
+########### DataBrew Immersion Day Template ################
+
+############ SageMaker Notebooks #################
+  StackName:
+    Description: 'Stack name'
+    Value: !Sub '${AWS::StackName}'
+  NotebookEndpoint:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/sagemaker/home?notebookState=Lw%3D%3D&region=${AWS::Region}#/notebook-instances/${SMNotebookName}"
+############ SageMaker Notebooks #################

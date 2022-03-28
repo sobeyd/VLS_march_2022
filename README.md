@@ -1,6 +1,4 @@
-# VLS march 2022
-
-# Building integrated ETL tools, Hadoop and Machine Learning solutions on AWS
+# VLS march 2022 - Building integrated ETL tools, Hadoop and Machine Learning solutions on AWS
 
 ## An AWS Learning and Recruiting Event
 
